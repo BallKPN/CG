@@ -5,6 +5,21 @@
 #define FRAME 1000/24
 #define PI 3.14159265
 
+void rotatePoint(int px, int py, int &x, int &y, double angle) {
+    float rad = angle * PI / 180;
+
+    int tempX = x - px;
+    int tempY = y - py;
+    x = px + (int)(tempX * cos(rad) - tempY * sin(rad));
+    y = py + (int)(tempX * sin(rad) + tempY * cos(rad));
+}
+
+void drawMarkX(int x, int y, int length) {
+    int r = (int) length / 2;
+    line(x - r, y - r, x + r, y + r);
+    line(x + r, y - r, x - r, y + r);
+}
+
 // Function to draw a stickman
 void drawStickman(int x, int y) {
     setcolor(WHITE);
@@ -22,6 +37,37 @@ void drawStickman(int x, int y) {
     // Draw legs
     line(x, y + 100, x - 40, y + 150); // left leg
     line(x, y + 100, x + 40, y + 150); // right leg
+}
+
+void drawStickmanWalking(int x, int y, double angle) {
+    setcolor(WHITE);
+
+    // Draw the head
+    circle(x, y, 30); // head is a circle with radius 30
+
+    // Draw the body
+    line(x, y + 30, x, y + 100); // body is a line from just below the head to the torso length
+
+    // Draw arms
+    line(x, y + 50, x - 40, y + 70); // left arm
+    line(x, y + 50, x + 40, y + 70); // right arm
+
+    // Draw legs
+    int xl1 = x;
+    int yl1 = y + 100;
+    int xl2 = x - 40;
+    int yl2 = y + 150;
+    rotatePoint(xl1, yl1, xl1, yl1, -angle);
+    rotatePoint(xl1, yl1, xl2, yl2, -angle);
+    line(xl1, yl1, xl2, yl2); // left leg
+
+    int xr1 = x;
+    int yr1 = y + 100;
+    int xr2 = x + 40;
+    int yr2 = y + 150;
+    rotatePoint(xr1, yr1, xr1, yr1, angle);
+    rotatePoint(xr1, yr1, xr2, yr2, angle);
+    line(xr1, yr1, xr2, yr2); // right leg
 }
 
 // Function to draw a UFO
@@ -328,6 +374,134 @@ void drawNNpin(int x, int y, float scale=1, char color=WHITE) {
     setcolor(WHITE);
 }
 
+void drawNNManDead(int x, int y, int px, int py, double angle, bool isDead, float scale=1, char color=WHITE) {
+    setcolor(color);
+
+    setfillstyle(SOLID_FILL, color);
+
+    int xh = x;
+    int yh = y;
+    rotatePoint(px, py, xh, yh, angle);
+    fillellipse(xh, yh, 50 * scale, 50 * scale); // Head
+    
+    int xb1 = x;
+    int yb1 = y + 50 * scale;
+    int xb2 = x;
+    int yb2 = y + 175 * scale;
+    rotatePoint(px, py, xb1, yb1, angle);
+    rotatePoint(px, py, xb2, yb2, angle);
+    line(xb1, yb1, xb2, yb2); //Body
+
+    int xa1 = x - 75 * scale;
+    int ya1 = y + 75 * scale;
+    int xa2 = x + 75 * scale;
+    int ya2 = y + 75 * scale;
+    rotatePoint(px, py, xa1, ya1, angle);
+    rotatePoint(px, py, xa2, ya2, angle);
+    line(xa1, ya1 , xa2 , ya2); // Arms
+
+    int xl1 = x;
+    int yl1 = y + 175 * scale;
+    int xl2 = x - 50 * scale;
+    int yl2 = y + 250 * scale;
+    rotatePoint(px, py, xl1, yl1, angle);
+    rotatePoint(px, py, xl2, yl2, angle);
+    line(xl1, yl1, xl2, yl2); // Left leg
+
+    int xr1 = x;
+    int yr1 = y + 175 * scale;
+    int xr2 = x + 50 * scale;
+    int yr2 = y + 250 * scale;
+    rotatePoint(px, py, xr1, yr1, angle);
+    rotatePoint(px, py, xr2, yr2, angle);
+    line(xr1, yr1, xr2, yr2); // Right leg
+
+    // eyes
+    if (isDead) {
+        int xel = x - 20 * scale;
+        int yel = y;
+        int xer = x + 20 * scale;
+        int yer = y;
+        rotatePoint(px, py, xel, yel, angle);
+        rotatePoint(px, py, xer, yer, angle);
+        setcolor(BLACK);
+        drawMarkX(xel, yel, 13 * scale);
+        drawMarkX(xer, yer, 13 * scale);
+
+    } else {
+        int xel1 = x - 20 * scale;
+        int yel1 = y + 5 * scale;
+        int xer1 = x + 20 * scale;
+        int yer1 = y + 5 * scale;
+        rotatePoint(px, py, xel1, yel1, angle);
+        rotatePoint(px, py, xer1, yer1, angle);
+        setfillstyle(SOLID_FILL, BLACK);
+        fillellipse(xel1, yel1, 13 * scale, 13 * scale);
+        fillellipse(xer1, yer1, 13 * scale, 13 * scale);
+
+        int xel2 = x - 20 * scale;
+        int yel2 = y;
+        int xer2 = x + 20 * scale;
+        int yer2 = y;
+        rotatePoint(px, py, xel2, yel2, angle);
+        rotatePoint(px, py, xer2, yer2, angle);
+        setcolor(BLACK);
+        setfillstyle(SOLID_FILL, WHITE);
+        fillellipse(xel2, yel2, 13 * scale, 13 * scale);
+        fillellipse(xer2, yer2, 13 * scale, 13 * scale);
+    }
+
+    setcolor(WHITE);
+}
+
+void drawFiringBullet(int x, int y) {
+    // Define the points of the polygon
+    int points[8];
+
+    points[0] = x;          // Starting x point
+    points[1] = y;          // Starting y point
+    points[2] = x + 30;    // Left endpoint x of the beam
+    points[3] = y - 30;     // Left endpoint y of the beam
+    points[4] = x + 35;    // Right endpoint x of the beam
+    points[5] = y - 25;     // Right endpoint y of the beam
+    points[6] = x + 5;     // Close the polygon back at the starting x point
+    points[7] = y + 5;     // Close the polygon back at the starting y point
+
+    // Set the color for the beam
+    setcolor(GREEN);
+    setfillstyle(SOLID_FILL, GREEN);
+
+    // Fill the beam with color
+    fillpoly(4, points); // 4 is the number of points in the polygon
+}
+
+void drawNNAction(int x, int y, float scale=1, char color=WHITE) {
+    setcolor(color);
+
+    setfillstyle(SOLID_FILL, color);
+    fillellipse(x, y, 50 * scale, 50 * scale);
+
+    line(x, y + 50 * scale, x, y + 175 * scale); //Body
+
+    line(x, y + 75 * scale, x + 75 * scale, y + 75 * scale); // Arm1
+
+    line(x, y + 75 * scale, x + 75 * scale, y + 50 * scale); // Arm2
+
+    line(x, y + 175 * scale, x - 50 * scale, y + 250 * scale); // Left leg
+
+    line(x, y + 175 * scale, x + 50 * scale, y + 250 * scale); // Right leg
+
+    setfillstyle(SOLID_FILL, BLACK);
+    fillellipse(x + 20 * scale, y + 5 * scale, 13 * scale, 13 * scale);
+
+    setcolor(BLACK);
+    setfillstyle(SOLID_FILL, WHITE);
+    fillellipse(x + 20 * scale, y, 13 * scale, 13 * scale);
+
+    // end
+    setcolor(WHITE);
+}
+
 void drawNNhead(int x, int y, float scale=1, char color=WHITE) {
     setcolor(color);
 
@@ -446,9 +620,10 @@ void drawScene1() {
 
     int x2 = -100, y2 = 300;
     int i = 1;
+    double angle = 0;
     while (1) {  // Second scene: UFO moving from right to left
         cleardevice();  // Clear the screen
-        drawStickman(x2, y2);
+        drawStickmanWalking(x2, y2, angle);
         drawUFO(x, y);
         switch (i) {
             case 1:
@@ -467,6 +642,11 @@ void drawScene1() {
         if (i == 4) break;
         if (x2 <= getmaxx()/2) {
             x2 += 3;
+            if (angle < 90) {
+                angle += 10;
+            } else if (angle > 0){
+                angle =- 10;
+            }
         }
         delay(FRAME);  // Wait for 50 milliseconds
     }
@@ -540,7 +720,7 @@ void drawScene2() {
         drawBeam(getmaxx()/2+100, -200, i);
         delay(FRAME);
     }
-    delay(1000);
+    delay(2000);
 
     cleardevice();
     drawShearedRotatedRectangle(275, 75, 150, 175, -50, 90);
@@ -589,7 +769,7 @@ void drawScene4() {
     bar(x*3/4, y/2-40, x*3/4+50, y/2+40);
     delay(1000);
 
-    for (int i = 0; i < 150; i += 5) {
+    for (int i = 0; i < 150; i += 3) {
         cleardevice();
         drawNNhead(x/4 + i, y/2, 1);
         setfillstyle(SOLID_FILL, GREEN);
@@ -634,8 +814,139 @@ void drawScene5() {
     delay(1000);
 }
 
-void drawScene7() {
+void drawScene6() {
     cleardevice();
+
+    int xM = 100;
+    int yM = getmaxy() - 150;
+
+    // interation n times
+    for (int n = 0; n < 10; n++) {
+        
+        // firing bullets
+        int xB = xM + 40;
+        int yB = yM + 10;
+
+        int xB1 = xB;
+        int yB1 = yB;
+        int xB2 = xB;
+        int yB2 = yB + 50;
+        int xB3 = xB;
+        int yB3 = yB - 50;
+        int xB4 = xB;
+        int yB4 = yB + 100;
+        bool c1 = false;
+        bool c2 = false;
+        bool c3 = false;
+        bool c4 = false;
+
+        int fireRate = 40;
+
+        // ufo
+        int xU = getmaxx() - 20;
+        int yU = -20;
+
+        int xU1 = xU;
+        int yU1 = yU;
+        int xU2 = xU + 100;
+        int yU2 = yU + 100;
+        int xU3 = xU -150;
+        int yU3 = yU;
+
+        // loop Frame
+        int i = 0;
+        while (1) {
+            // start loop
+            cleardevice();
+            drawNNAction(xM, yM, 0.5, LIGHTGREEN);
+            
+            // firing 1
+            if (yB1 <= 0 || xB1 >= getmaxx()) {
+                c1 = true;
+            } else if (i > 0) {
+                drawFiringBullet(xB1, yB1);
+                xB1 += fireRate;
+                yB1 -= fireRate;
+            }
+
+            // firing 2
+            if (yB2 <= 0 || xB2 >= getmaxx()) {
+                c2 = true;
+            } else if (i > 10) {
+                drawFiringBullet(xB2, yB2);
+                xB2 += fireRate;
+                yB2 -= fireRate;
+            }
+
+            // firing 3
+            if (yB3 <= 0 || xB3 >= getmaxx()) {
+                c3 = true;
+            } else if (i > 5) {
+                drawFiringBullet(xB3, yB3);
+                xB3 += fireRate;
+                yB3 -= fireRate;
+            }
+
+            // firing 4
+            if (yB4 <= 0 || xB4 >= getmaxx()) {
+                c4 = true;
+            } else if (i > 15) {
+                drawFiringBullet(xB4, yB4);
+                xB4 += fireRate;
+                yB4 -= fireRate;
+            }
+
+            // ufo 1
+            if (yU1 < yB && xU1 > xB && i > 0) {
+                drawUFO(xU1, yU1);
+                xU1 -= fireRate;
+                yU1 += fireRate;
+            }
+
+            // ufo 2
+            if (yU2 < yB && xU2 > xB && i > 5) {
+                drawUFO(xU2, yU2);
+                xU2 -= fireRate;
+                yU2 += fireRate;
+            }
+
+            // ufo 3
+            if (yU3 < yB && xU3 > xB && i > 10) {
+                drawUFO(xU3, yU3);
+                xU3 -= fireRate;
+                yU3 += fireRate;
+            }
+
+            // end loop
+            delay(FRAME);
+            i++;
+            if (c1 && c2 && c3 && c4) break;
+        }
+    }
+    
+    delay(1000);
+
+}
+
+void drawScene7() {
+    int xm = getmaxx() / 2;
+    int ym = getmaxy() / 3;
+    double angle = 0;
+    for (int i = 0; i < 181; i++) {
+        cleardevice();
+        if (angle == 90) {
+            drawNNManDead(xm, ym, xm, ym + 200, angle, true, 1, LIGHTGREEN);
+        } else{
+            drawNNManDead(xm, ym, xm, ym + 200, angle, false, 1, LIGHTGREEN);
+        }
+        delay(FRAME);
+        angle += 0.5;
+    }
+    delay(3000);
+
+    cleardevice();
+
+    delay(200);
 }
 
 void drawScene8() {
@@ -663,13 +974,14 @@ int main() {
     int gd = DETECT, gm;
     initgraph(&gd, &gm, NULL);  // Initialize graphics mode
 
-    // drawScene1(); 
-    // drawScene2();
+    drawScene1(); 
+    drawScene2();
     drawScene3();
     drawScene4();
-    // drawScene5();
-    // drawScene7();
-    // drawScene8();
+    drawScene5();
+    drawScene6();
+    drawScene7();
+    drawScene8();
     
     getch();  // Wait for a key press
     closegraph();  // Close graphics mode
